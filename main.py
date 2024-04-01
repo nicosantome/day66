@@ -42,6 +42,9 @@ class Cafe(db.Model):
     can_take_calls: Mapped[bool] = mapped_column(Boolean, nullable=False)
     coffee_price: Mapped[str] = mapped_column(String(250), nullable=True)
 
+    def to_dict(self):
+        return {column.name: getattr(self, column.name) for column in self.__table__.columns}
+
 
 with app.app_context():
     db.create_all()
@@ -55,8 +58,7 @@ def home():
 def get_random_cafe():
     all_cafes = db.session.query(Cafe).all()
     random_cafe = random.choice(all_cafes)
-    print(random_cafe)
-    pass
+    return jsonify(cafe=random_cafe.to_dict())
 
 
 # HTTP GET - Read Record
