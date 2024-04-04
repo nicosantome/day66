@@ -70,6 +70,40 @@ def get_all_cafes():
     return jsonify(cafes=all_cafes_dict)
 
 
+@app.route("/search")
+def search():
+    location_param = request.args.get('loc')
+    result = db.session.execute(db.select(Cafe).where(Cafe.location == location_param))
+    all_cafes = result.scalars().all()
+    print(all_cafes)
+    if all_cafes:
+        return jsonify(cafe=[cafe.to_dict() for cafe in all_cafes])
+    else:
+        return jsonify(error={'Not Found': "Sorry we don't have a cafe at that location"})
+
+
+@app.route("/add", methods=['POST'])
+def add_cafe():
+    data = request.form
+    new_cafe = Cafe(
+        name=data['name'],
+        map_url=data['map_url'],
+        img_url=data['img_url'],
+        location=data['location'],
+        seats=data['seats'],
+        has_toilet=bool(data['has_toilet']),
+        has_wifi=bool(data['has_wifi']),
+        has_sockets=bool(data['has_sockets']),
+        can_take_calls=bool(data['can_take_calls']),
+        coffee_price=data.get('coffee_price')
+    )
+    db.session.add(new_cafe)
+    db.session.commit()
+
+    return jsonify({'Response': 'Added successfully'})
+
+
+
 # HTTP GET - Read Record
 
 # HTTP POST - Create Record
