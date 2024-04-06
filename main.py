@@ -19,9 +19,12 @@ This will install the packages from requirements.txt for this project.
 
 app = Flask(__name__)
 
+
 # CREATE DB
 class Base(DeclarativeBase):
     pass
+
+
 # Connect to Database
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///cafes.db'
 db = SQLAlchemy(model_class=Base)
@@ -54,6 +57,10 @@ with app.app_context():
 def home():
     return render_template("index.html")
 
+
+# HTTP GET - Read Record
+
+
 @app.route("/random")
 def get_random_cafe():
     all_cafes = db.session.query(Cafe).all()
@@ -82,6 +89,8 @@ def search():
         return jsonify(error={'Not Found': "Sorry we don't have a cafe at that location"})
 
 
+# HTTP POST - Create Record
+
 @app.route("/add", methods=['POST'])
 def add_cafe():
     data = request.form
@@ -103,14 +112,35 @@ def add_cafe():
     return jsonify({'Response': 'Added successfully'})
 
 
-
-# HTTP GET - Read Record
-
-# HTTP POST - Create Record
-
 # HTTP PUT/PATCH - Update Record
 
+@app.route('/update/<cafe_id>', methods=['PATCH'])
+def update_cafe(cafe_id):
+    new_price = request.args.get('new_price')
+    cafe_to_update = db.session.execute(db.select(Cafe).where(Cafe.id == cafe_id)).scalar()
+    if cafe_to_update:
+        cafe_to_update.coffee_price = new_price
+        db.session.commit()
+        return jsonify({'Response': 'Updated successfully'})
+    else:
+        return jsonify({'Response': 'ID not found'}), 404
+
+
 # HTTP DELETE - Delete Record
+@app.route('/delete/<cafe_id>', methods=['DELETE'])
+def delete(cafe_id):
+    api_key = 'PASSWORD'
+    if request.args.get('api_key') == api_key:
+        cafe_to_delete = db.session.execute(db.select(Cafe).where(Cafe.id == cafe_id)).scalar()
+        if cafe_to_delete:
+            db.session.delete(cafe_to_delete)
+            db.session.commit()
+            return jsonify({'Response': 'Deleted successfully'})
+        else:
+            return jsonify({'Response': 'ID not found'}), 404
+    else:
+        return jsonify({'Response': 'Wrong API key'}), 403
+
 
 
 if __name__ == '__main__':
